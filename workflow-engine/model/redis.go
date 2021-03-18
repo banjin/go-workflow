@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -13,6 +14,7 @@ var clusterIsOpen = false
 
 // RedisOpen 是否连接 redis
 var RedisOpen = false
+var cx = context.Background()
 
 // SetRedis 设置redis
 func SetRedis() {
@@ -23,7 +25,7 @@ func SetRedis() {
 			Addrs:    []string{conf.RedisHost + ":" + conf.RedisPort},
 			Password: conf.RedisPassword,
 		})
-		pong, err := redisClusterClient.Ping().Result()
+		pong, err := redisClusterClient.Ping(cx).Result()
 		if err != nil {
 			fmt.Printf("------------连接 redis cluster：%s 失败,原因：%v\n", conf.RedisHost+":"+conf.RedisPort, err)
 		}
@@ -34,7 +36,7 @@ func SetRedis() {
 			Addr:     conf.RedisHost + ":" + conf.RedisPort,
 			Password: conf.RedisPassword,
 		})
-		pong, err := redisClient.Ping().Result()
+		pong, err := redisClient.Ping(cx).Result()
 		if err != nil {
 			fmt.Printf("------------连接 redis：%s 失败,原因：%v\n", conf.RedisHost+":"+conf.RedisPort, err)
 		}
@@ -46,15 +48,15 @@ func SetRedis() {
 // RedisSetVal 将值保存到redis
 func RedisSetVal(key, value string, expiration time.Duration) error {
 	if clusterIsOpen {
-		return redisClusterClient.Set(key, value, expiration).Err()
+		return redisClusterClient.Set(cx, key, value, expiration).Err()
 	}
-	return redisClient.Set(key, value, expiration).Err()
+	return redisClient.Set(cx, key, value, expiration).Err()
 }
 
 // RedisGetVal 从redis获取值
 func RedisGetVal(key string) (string, error) {
 	if clusterIsOpen {
-		return redisClusterClient.Get(key).Result()
+		return redisClusterClient.Get(cx, key).Result()
 	}
-	return redisClient.Get(key).Result()
+	return redisClient.Get(cx, key).Result()
 }
